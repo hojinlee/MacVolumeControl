@@ -102,4 +102,6 @@ cat > "$OUTPUT_DIR/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
+codesign --force --sign - "$OUTPUT_DIR"
+
 echo "Built app bundle at $OUTPUT_DIR"

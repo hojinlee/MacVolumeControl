@@ -24,6 +24,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
     )
+    private lazy var launchAtLoginController = LaunchAtLoginController(
+        settingsStore: settingsStore
+    )
 
     private var statusItem: NSStatusItem?
     private let menu = NSMenu()
@@ -34,11 +37,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let modeDescriptionItem = NSMenuItem(title: "현재 모드: --", action: nil, keyEquivalent: "")
     private let restartItem = NSMenuItem(title: "입력 감시 다시 시작", action: nil, keyEquivalent: "")
     private let permissionsItem = NSMenuItem(title: "권한 설정 열기…", action: nil, keyEquivalent: "")
+    private let launchAtLoginItem = NSMenuItem(title: "로그인 시 자동 실행", action: nil, keyEquivalent: "")
     private var lastInterceptedInputDescription = "--"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureStatusItem()
         configureMenu()
+        launchAtLoginController.applyDefaultIfNeeded()
         refreshMenuState()
         refreshVolumeTitle()
 
@@ -83,6 +88,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         permissionsItem.target = self
         permissionsItem.action = #selector(openPermissionSettings(_:))
 
+        launchAtLoginItem.target = self
+        launchAtLoginItem.action = #selector(toggleLaunchAtLogin(_:))
+
         menu.addItem(volumeItem)
         menu.addItem(captureStatusItem)
         menu.addItem(lastInputItem)
@@ -91,6 +99,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(modeDescriptionItem)
         menu.addItem(restartItem)
         menu.addItem(permissionsItem)
+        menu.addItem(.separator())
+        menu.addItem(launchAtLoginItem)
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(title: "종료", action: #selector(quitApplication(_:)), keyEquivalent: "q")
@@ -106,6 +116,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         restartItem.isEnabled = settingsStore.isFineModeEnabled
         captureStatusItem.title = "입력 감시 상태: \(captureStatusText())"
         lastInputItem.title = "마지막 감지: \(lastInterceptedInputDescription)"
+        refreshLaunchAtLoginItem()
+    }
+
+    private func refreshLaunchAtLoginItem() {
+        let presentation = LaunchAtLoginMenuPresentation(
+            state: launchAtLoginController.menuState
+        )
+        launchAtLoginItem.title = presentation.title
+        launchAtLoginItem.state = presentation.itemState
     }
 
     private func refreshVolumeTitle() {
@@ -174,6 +193,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    @objc
+    private func toggleLaunchAtLogin(_ sender: NSMenuItem) {
+        launchAtLoginController.performMenuAction()
+        refreshMenuState()
     }
 
     @objc

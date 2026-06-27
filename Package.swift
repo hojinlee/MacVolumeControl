@@ -16,6 +16,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "MacVolumeControl"
+        ),
+        .testTarget(
+            name: "MacVolumeControlTests",
+            dependencies: ["MacVolumeControl"]
         )
     ]
 )
